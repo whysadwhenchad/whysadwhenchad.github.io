@@ -15,7 +15,7 @@
 <body>
 
 <div class="container">
-    <h2>send me smthhhhhhh :33333 ✨</h2>
+    <h2>send me smthhhhhhh :33333</h2>
     <textarea id="messageInput" placeholder="Type something sweet..."></textarea><br>
     <button onclick="sendMessage()">type text here <33</button>
     <p id="status" style="color: green; font-weight: bold;"></p>
@@ -23,15 +23,15 @@
 
 <script>
     // REPLACE THIS URL WITH YOUR FIREBASE DATABASE URL (Keep the '/message.json' at the end)
-    const firebaseURL = "https://YOUR-PROJECT-NAME-default-rtdb.firebaseio.com/message.json";
+    const firebaseURL = "https://console.firebase.google.com/u/0/project/ournote-14204/database/ournote-14204-default-rtdb/data/~2F/message.json";
 
     function sendMessage() {
         const text = document.getElementById("messageInput").value;
         const status = document.getElementById("status");
 
-        if(!text) { alert("Type something first!"); return; }
+        if(!text) { alert("type something first bru"); return; }
 
-        status.innerText = "Sending...";
+        status.innerText = "sending it to himm <3333";
 
         // Put the text in quotes so it's a valid JSON string
         fetch(firebaseURL, {
@@ -40,10 +40,10 @@
         })
         .then(response => {
             if(response.ok) {
-                status.innerText = "Sent successfully! ❤️";
+                status.innerText = "he got itt :33";
                 document.getElementById("messageInput").value = "";
             } else {
-                status.innerText = "Error sending message.";
+                status.innerText = "smth fucked up hold on";
             }
         })
         .catch(err => status.innerText = "Error: " + err);
