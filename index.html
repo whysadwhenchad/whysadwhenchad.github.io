@@ -22,7 +22,9 @@
 </div>
 
 <script>
-    const firebaseURL = "https://ournote-14204-default-rtdb.firebaseio.com/message.json";
+    // Completely separated API paths
+    const espURL = "https://ournote-14204-default-rtdb.firebaseio.com/current_message.json";
+    const logURL = "https://ournote-14204-default-rtdb.firebaseio.com/history_logs.json";
 
     function sendMessage() {
         const text = document.getElementById("messageInput").value;
@@ -32,22 +34,31 @@
 
         status.innerText = "sending it to himm <3333";
 
-        // Get current local time formatted to 12-hour AM/PM format (e.g., "09:45 PM")
         const now = new Date();
         const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStamp = now.toLocaleDateString(); 
 
-        // Package both the text and the time into an object matching your ESP32 JSON parser
         const dataToSend = {
             text: text,
-            time: timestamp
+            time: timestamp,
+            date: dateStamp
         };
 
-        fetch(firebaseURL, {
+        // 1. Update the display box path (Overwrites via PUT)
+        const sendToESP = fetch(espURL, {
             method: "PUT",
             body: JSON.stringify(dataToSend)
-        })
-        .then(response => {
-            if(response.ok) {
+        });
+
+        // 2. Save to the separate history directory (Appends via POST)
+        const sendToLogs = fetch(logURL, {
+            method: "POST",
+            body: JSON.stringify(dataToSend)
+        });
+
+        Promise.all([sendToESP, sendToLogs])
+        .then(responses => {
+            if(responses[0].ok && responses[1].ok) {
                 status.innerText = "he got itt :33";
                 document.getElementById("messageInput").value = "";
             } else {
