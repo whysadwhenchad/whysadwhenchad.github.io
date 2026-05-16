@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Me a Note ❤️</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #ffe6e6; text-align: center; padding: 50px; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; }
+        textarea { width: 80%; height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ffb3b3; font-size: 16px; resize: none; }
+        button { background-color: #ff4d4d; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #ff1a1a; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Send a message to my desk! ✨</h2>
+    <textarea id="messageInput" placeholder="Type something sweet..."></textarea><br>
+    <button onclick="sendMessage()">Send to OLED</button>
+    <p id="status" style="color: green; font-weight: bold;"></p>
+</div>
+
+<script>
+    // REPLACE THIS URL WITH YOUR FIREBASE DATABASE URL (Keep the '/message.json' at the end)
+    const firebaseURL = "https://YOUR-PROJECT-NAME-default-rtdb.firebaseio.com/message.json";
+
+    function sendMessage() {
+        const text = document.getElementById("messageInput").value;
+        const status = document.getElementById("status");
+
+        if(!text) { alert("Type something first!"); return; }
+
+        status.innerText = "Sending...";
+
+        // Put the text in quotes so it's a valid JSON string
+        fetch(firebaseURL, {
+            method: "PUT",
+            body: JSON.stringify(text)
+        })
+        .then(response => {
+            if(response.ok) {
+                status.innerText = "Sent successfully! ❤️";
+                document.getElementById("messageInput").value = "";
+            } else {
+                status.innerText = "Error sending message.";
+            }
+        })
+        .catch(err => status.innerText = "Error: " + err);
+    }
+</script>
+
+</body>
+</html>
