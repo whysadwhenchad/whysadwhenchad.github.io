@@ -32,9 +32,19 @@
 
         status.innerText = "sending it to himm <3333";
 
+        // Get current local time formatted to 12-hour AM/PM format (e.g., "09:45 PM")
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Package both the text and the time into an object matching your ESP32 JSON parser
+        const dataToSend = {
+            text: text,
+            time: timestamp
+        };
+
         fetch(firebaseURL, {
             method: "PUT",
-            body: JSON.stringify(text)
+            body: JSON.stringify(dataToSend)
         })
         .then(response => {
             if(response.ok) {
