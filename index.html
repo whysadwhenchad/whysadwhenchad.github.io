@@ -17,13 +17,12 @@
 <div class="container">
     <h2>send me smthhhhhhh :33333</h2>
     <textarea id="messageInput" placeholder="type smth you wanna tell me :3"></textarea><br>
-    <button onclick="sendMessage()">SENDDD<33</button>
+    <button onclick="sendMessage()">SENDDD&lt;33</button>
     <p id="status" style="color: green; font-weight: bold;"></p>
 </div>
 
 <script>
-    // REPLACE THIS URL WITH YOUR FIREBASE DATABASE URL (Keep the '/message.json' at the end)
-    const firebaseURL = "https://console.firebase.google.com/u/0/project/ournote-14204/database/ournote-14204-default-rtdb/data/~2F/message.json";
+    const firebaseURL = "https://ournote-14204-default-rtdb.firebaseio.com/message.json";
 
     function sendMessage() {
         const text = document.getElementById("messageInput").value;
@@ -33,7 +32,6 @@
 
         status.innerText = "sending it to himm <3333";
 
-        // Put the text in quotes so it's a valid JSON string
         fetch(firebaseURL, {
             method: "PUT",
             body: JSON.stringify(text)
