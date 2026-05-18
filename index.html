@@ -22,7 +22,6 @@
 
 <div class="container">
     <h2>send me smthhhhhhh :33333</h2>
-    
     <textarea id="messageInput" placeholder="type a message..."></textarea>
     
     <label class="file-input-label">
@@ -31,8 +30,7 @@
     </label>
     <canvas id="preview"></canvas>
 
-    <!-- NEW HOLD TO RECORD BUTTON -->
-    <div id="recordBtn" class="record-btn">hold to record voice :3 (up to 6s)</div>
+    <div id="recordBtn" class="record-btn">🎤 hold to record voice (up to 6s)</div>
     <div id="audioStatus">No voice note attached</div>
     
     <button class="send-btn" onclick="sendMessage()">SENDDD&lt;33</button>
@@ -41,6 +39,7 @@
 
 <script>
     const espURL = "https://ournote-14204-default-rtdb.firebaseio.com/current_message.json";
+    const voiceURL = "https://ournote-14204-default-rtdb.firebaseio.com/current_voice.json";
     const logURL = "https://ournote-14204-default-rtdb.firebaseio.com/history_logs.json";
     
     let hexImageString = ""; 
@@ -51,7 +50,6 @@
     let isRecording = false;
     let recordTimeout;
 
-    // --- AUDIO RECORDING ENGINE ---
     const recordBtn = document.getElementById('recordBtn');
     const audioStatus = document.getElementById('audioStatus');
 
@@ -68,9 +66,7 @@
             mediaRecorder.start();
             isRecording = true;
             recordBtn.classList.add('recording');
-            recordBtn.innerText = "recording... let go to stop";
-            
-            // Auto stop after 6 seconds to prevent ESP32 memory crash
+            recordBtn.innerText = "🔴 recording... let go to stop";
             recordTimeout = setTimeout(() => stopRecording(), 6000);
         } catch (err) { alert("Mic access denied!"); }
     }
@@ -79,49 +75,41 @@
         if(!isRecording) return;
         clearTimeout(recordTimeout);
         mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(t => t.stop()); // kill mic
+        mediaRecorder.stream.getTracks().forEach(t => t.stop()); 
         isRecording = false;
         recordBtn.classList.remove('recording');
         recordBtn.innerText = "🎤 hold to record voice (up to 6s)";
     }
 
-    // Process high-def web audio into tiny 8kHz 8-bit Base64 for the ESP32
     async function processAudio() {
         audioStatus.innerText = "processing audio...";
         const blob = new Blob(audioChunks);
         const arrayBuffer = await blob.arrayBuffer();
         
-        // Downsample to 8000 Hz
         const ctx = new AudioContext({ sampleRate: 8000 });
         const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-        const float32Data = audioBuffer.getChannelData(0); // Mono channel
+        const float32Data = audioBuffer.getChannelData(0); 
         
-        // Convert Float32 to 8-bit unsigned PCM
         const pcm8 = new Uint8Array(float32Data.length);
         for(let i = 0; i < float32Data.length; i++) {
             let val = Math.max(-1, Math.min(1, float32Data[i]));
             pcm8[i] = Math.round((val + 1) * 127.5);
         }
         
-        // Convert to Base64
         let binary = '';
         for (let i = 0; i < pcm8.byteLength; i++) {
             binary += String.fromCharCode(pcm8[i]);
         }
         base64AudioString = window.btoa(binary);
-        
-        audioStatus.innerText = "✅ Voice note attached! (" + (pcm8.byteLength / 1000).toFixed(1) + " KB)";
+        audioStatus.innerText = "✅ Voice note attached!";
     }
 
-    // Touch and Mouse events for Hold-to-Record
     recordBtn.addEventListener('mousedown', startRecording);
     recordBtn.addEventListener('mouseup', stopRecording);
     recordBtn.addEventListener('mouseleave', stopRecording);
     recordBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
     recordBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
 
-
-    // --- IMAGE PROCESSING ENGINE ---
     function processImage() {
         const file = document.getElementById('imageInput').files[0];
         if (!file) return;
@@ -172,7 +160,6 @@
         };
     }
 
-    // --- SEND TO FIREBASE ---
     function sendMessage() {
         const text = document.getElementById("messageInput").value;
         const status = document.getElementById("status");
@@ -187,18 +174,23 @@
         const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateStamp = now.toLocaleDateString(); 
 
+        // 1. JSON Data Payload
         const dataToSend = {
             text: text,
             time: timestamp,
             date: dateStamp,
             image_data: hexImageString || "null",
-            voice_data: base64AudioString || "null"
+            has_voice: base64AudioString !== "" 
         };
 
-        const sendToESP = fetch(espURL, { method: "PUT", body: JSON.stringify(dataToSend) });
-        const sendToLogs = fetch(logURL, { method: "POST", body: JSON.stringify(dataToSend) });
+        // 2. Separate Audio String Payload
+        const audioToSend = base64AudioString || "null";
 
-        Promise.all([sendToESP, sendToLogs]).then(responses => {
+        const sendToESP = fetch(espURL, { method: "PUT", body: JSON.stringify(dataToSend) });
+        const sendVoice = fetch(voiceURL, { method: "PUT", body: JSON.stringify(audioToSend) });
+        const sendToLogs = fetch(logURL, { method: "POST", body: JSON.stringify(dataToSend) }); // Logs don't need audio, saves DB space
+
+        Promise.all([sendToESP, sendVoice, sendToLogs]).then(responses => {
             if(responses[0].ok && responses[1].ok) {
                 status.innerText = "he got itt :33";
                 document.getElementById("messageInput").value = "";
