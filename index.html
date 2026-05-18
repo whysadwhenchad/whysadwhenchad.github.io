@@ -32,7 +32,7 @@
     <canvas id="preview"></canvas>
 
     <!-- NEW HOLD TO RECORD BUTTON -->
-    <div id="recordBtn" class="record-btn">🎤 hold to record voice (up to 6s)</div>
+    <div id="recordBtn" class="record-btn">hold to record voice :3 (up to 6s)</div>
     <div id="audioStatus">No voice note attached</div>
     
     <button class="send-btn" onclick="sendMessage()">SENDDD&lt;33</button>
@@ -68,7 +68,7 @@
             mediaRecorder.start();
             isRecording = true;
             recordBtn.classList.add('recording');
-            recordBtn.innerText = "🔴 recording... let go to stop";
+            recordBtn.innerText = "recording... let go to stop";
             
             // Auto stop after 6 seconds to prevent ESP32 memory crash
             recordTimeout = setTimeout(() => stopRecording(), 6000);
