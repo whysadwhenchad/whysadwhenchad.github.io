@@ -30,7 +30,7 @@
     </label>
     <canvas id="preview"></canvas>
 
-    <div id="recordBtn" class="record-btn">🎤 hold to record voice (up to 6s)</div>
+    <div id="recordBtn" class="record-btn">🎤 hold to record voice (up to 3.7s)</div>
     <div id="audioStatus">No voice note attached</div>
     
     <button class="send-btn" onclick="sendMessage()">SENDDD&lt;33</button>
@@ -67,7 +67,9 @@
             isRecording = true;
             recordBtn.classList.add('recording');
             recordBtn.innerText = "🔴 recording... let go to stop";
-            recordTimeout = setTimeout(() => stopRecording(), 6000);
+            
+            // Auto stop after 3.7 seconds to protect ESP32 RAM limit
+            recordTimeout = setTimeout(() => stopRecording(), 3700);
         } catch (err) { alert("Mic access denied!"); }
     }
 
@@ -78,7 +80,7 @@
         mediaRecorder.stream.getTracks().forEach(t => t.stop()); 
         isRecording = false;
         recordBtn.classList.remove('recording');
-        recordBtn.innerText = "🎤 hold to record voice (up to 6s)";
+        recordBtn.innerText = "🎤 hold to record voice (up to 3.7s)";
     }
 
     async function processAudio() {
@@ -86,7 +88,8 @@
         const blob = new Blob(audioChunks);
         const arrayBuffer = await blob.arrayBuffer();
         
-        const ctx = new AudioContext({ sampleRate: 8000 });
+        // Upgraded to 16,000 Hz HD Voice!
+        const ctx = new AudioContext({ sampleRate: 16000 });
         const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
         const float32Data = audioBuffer.getChannelData(0); 
         
@@ -101,7 +104,7 @@
             binary += String.fromCharCode(pcm8[i]);
         }
         base64AudioString = window.btoa(binary);
-        audioStatus.innerText = "✅ Voice note attached!";
+        audioStatus.innerText = "✅ HD Voice note attached!";
     }
 
     recordBtn.addEventListener('mousedown', startRecording);
@@ -174,7 +177,6 @@
         const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateStamp = now.toLocaleDateString(); 
 
-        // 1. JSON Data Payload
         const dataToSend = {
             text: text,
             time: timestamp,
@@ -183,12 +185,11 @@
             has_voice: base64AudioString !== "" 
         };
 
-        // 2. Separate Audio String Payload
         const audioToSend = base64AudioString || "null";
 
         const sendToESP = fetch(espURL, { method: "PUT", body: JSON.stringify(dataToSend) });
         const sendVoice = fetch(voiceURL, { method: "PUT", body: JSON.stringify(audioToSend) });
-        const sendToLogs = fetch(logURL, { method: "POST", body: JSON.stringify(dataToSend) }); // Logs don't need audio, saves DB space
+        const sendToLogs = fetch(logURL, { method: "POST", body: JSON.stringify(dataToSend) }); 
 
         Promise.all([sendToESP, sendVoice, sendToLogs]).then(responses => {
             if(responses[0].ok && responses[1].ok) {
